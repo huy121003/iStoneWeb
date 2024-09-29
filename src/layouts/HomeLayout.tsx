@@ -1,25 +1,16 @@
-import { ReactNode } from 'react';
-import Header from '../components/Header';
-
-
+import { ReactNode } from "react";
+import Header from "../components/Header";
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 interface HomeLayoutProps {
   children: ReactNode;
 }
 
-const maxHeight = `calc(100vh - 96px)`;
-
-
 function HomeLayout({ children }: HomeLayoutProps) {
   return (
-    <div className={`flex-1 max-h-screen`}>
+    <div className={`flex-1 max-h-screen overflow-y-auto`}>
       <Header />
-     
-      <div
-        className='flex-1 overflow-y-auto'
-        style={{ maxHeight: maxHeight }} // Thiết lập chiều cao tối đa
-      >
-        {children}
-      </div>
+       
+      <div className="flex-1 ">{children}</div>
     </div>
   );
 }
