@@ -4,6 +4,7 @@ import { ICategories } from "../../models/ICategories";
 import { IProduct } from "../../models/IProduct";
 import { FetchProductApi } from "../../apis/ProductApi";
 import NotProduct from "../../components/NotProduct";
+import { useNavigate } from "react-router-dom";
 
 interface IProductRowProps {
   category: ICategories;
@@ -41,7 +42,6 @@ const ProductRow: React.FC<IProductRowProps> = ({ category }) => {
   const handleChildrent = useCallback((id: number) => {
     setCategoryChildren(id);
     setCurrentPage(1); // Reset page when category changes
-    console.log("Category Children:", id);
   }, []);
 
   const handleSort = (option: string) => {
@@ -56,29 +56,37 @@ const ProductRow: React.FC<IProductRowProps> = ({ category }) => {
       return Math.max(newPage, 1); // Ensure page number does not go below 1
     });
   };
-
+  const navigate = useNavigate(); // Khởi tạo useNavigate
+  const handleCategoryClick = (categoryId: number) => {
+    // Điều hướng đến trang SubPage với categoryId trong URL
+   //console.log(categoryId);
+    navigate(`/subpage/${categoryId}`);
+  };
   return (
     <div className="gap-10 rounded-xl py-2 px-4 md:px-28 flex flex-col w-full">
-      <div className="justify-start md:flex-row flex-col flex">
+      {/* Title and Description */}
+      <div className="justify-start md:flex-row flex-col flex mb-4">
         <h2 className="text-black text-3xl font-bold">{category.name}</h2>
         <p className="text-gray-500 text-3xl font-bold">
           {category.description}
         </p>
       </div>
 
-      <div className="flex justify-between">
+      {/* Children Categories & Sorting Options */}
+      <div className="flex justify-between items-center mb-4">
+        {/* Children Categories */}
         <div className="flex gap-2">
           {category.children?.map((childrenCate) => (
             <div
               key={childrenCate.id}
-              className={`gap-2 rounded-lg border p-2 cursor-pointer ${
-                categoryChildren === childrenCate.id ? "border-[#00B685]" : ""
+              className={`gap-2 rounded-lg border p-2 cursor-pointer transition-colors duration-300 ${
+                categoryChildren === childrenCate.id ? "border-[#00B685] bg-[#E6F8F1]" : "border-gray-200"
               }`}
               onClick={() => handleChildrent(childrenCate.id)}
             >
               <p
                 className={`font-normal text-xs ${
-                  categoryChildren === childrenCate.id ? "text-[#00B685]" : ""
+                  categoryChildren === childrenCate.id ? "text-[#00B685]" : "text-gray-700"
                 }`}
               >
                 {childrenCate.name}
@@ -87,6 +95,7 @@ const ProductRow: React.FC<IProductRowProps> = ({ category }) => {
           ))}
         </div>
 
+        {/* Sorting Menu */}
         <div className="relative">
           <div
             className="flex justify-between rounded-3xl h-9 border w-40 px-3 items-center cursor-pointer"
@@ -101,14 +110,14 @@ const ProductRow: React.FC<IProductRowProps> = ({ category }) => {
               {["best-seller", "DESC", "ASC"].map((option) => (
                 <li
                   key={option}
-                  className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
+                  className="px-4 py-2 hover:bg-gray-200 cursor-pointer transition-colors duration-200"
                   onClick={() => handleSort(option)}
                 >
                   {option === "best-seller"
                     ? "Bán chạy nhất"
                     : option === "DESC"
-                    ? "Gia tăng dần"
-                    : "Giảm dần"}
+                    ? "Giá giảm dần"
+                    : "Giá tăng dần"}
                 </li>
               ))}
             </ul>
@@ -116,6 +125,7 @@ const ProductRow: React.FC<IProductRowProps> = ({ category }) => {
         </div>
       </div>
 
+      {/* Product Cards & Pagination */}
       <div className="flex justify-center items-center overflow-hidden">
         <button
           className="p-4 border rounded-full"
@@ -144,8 +154,13 @@ const ProductRow: React.FC<IProductRowProps> = ({ category }) => {
         </button>
       </div>
 
-      <div className="flex justify-center text-center">
-        <p className="text-green-400 cursor-pointer">Xem toàn bộ &gt;&gt;</p>
+      {/* View All Link */}
+      <div className="flex justify-center text-center mt-4"
+      >
+        <p className="text-green-400 cursor-pointer hover:underline"
+        onClick={()=>handleCategoryClick(category.id)}>
+          Xem toàn bộ &gt;&gt;
+        </p>
       </div>
     </div>
   );

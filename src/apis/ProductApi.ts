@@ -6,14 +6,15 @@ export const FetchProductApi = async (
   categoryChildren: number | null,
   sortOption: string,
   page: number,
-  itemsPerPage: number
+  itemsPerPage: number,
+  keyword?: string
 ) => {
   try {
     const response = await apiHandler(
       ApiMethods.GET,
       `/api/v1/product?page=${page}&take=${itemsPerPage}&categoryId=${categoryId}${
         categoryChildren ? `&categoryChildren=${categoryChildren}` : ""
-      }${sortOption ? `&sortBy=${sortOption}` : ""}`
+      }${sortOption ? `&order=${sortOption}` : ""}${keyword ? `&keyword=${keyword}` : ""}`
     );
 
     console.log(

@@ -24,9 +24,11 @@ function SubPage() {
           const fetchedProducts = await FetchProductApi(
             Number(categoryId),
             null,
-            searchText, // Thêm searchText vào đây
+            "",
+           // searchText, // Thêm searchText vào đây
             1, // Luôn gọi page 1
-            pageSize // Kích thước sản phẩm tùy thuộc vào pageSize
+            pageSize ,// Kích thước sản phẩm tùy thuộc vào pageSize
+            searchText
           );
 
           // Sắp xếp sản phẩm theo sortOption
