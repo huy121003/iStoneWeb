@@ -36,7 +36,7 @@ const CardPhone: React.FC<CardPhoneProps> = ({ product }) => {
           product?.attribute[0]?.values?.map((value, index) => (
             <div
               key={index}
-              className={`h-6 w-6 rounded-full justify-center items-center flex ${index === numberColor ? 'border-2 border-blue-500' : ''}`}
+              className={`h-6 w-6 rounded-full justify-center items-center flex ${index === numberColor ? 'border-2 border-[#00B685]' : ''}`}
               onClick={() => setNumberColor(index)}
             >
               <div

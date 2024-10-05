@@ -3,56 +3,53 @@ import HomeLayout from "../../layouts/HomeLayout";
 import ProductRow from "./ProductRow";
 import { FetchCategoryApi } from "../../apis/CategoryApi";
 import { ICategories } from "../../models/ICategories";
-
+import { message } from "antd";
 function HomePage() {
   const [categories, setCategories] = useState<ICategories[]>([]);
-  
+
   useEffect(() => {
     const fetchCategories = async () => {
-      try {
-        const newCategories = await FetchCategoryApi();
-        setCategories(newCategories);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      }
+      const newCategories = await FetchCategoryApi();
+      if(newCategories?.status&&newCategories.status>=400) message.error(newCategories.message)
+      else setCategories(newCategories);
     };
     fetchCategories();
   }, []);
 
-  const ads = useMemo(() => [
-    {
-      icon: "fa-solid fa-truck",
-      title: "Miễn phí vận chuyển",
-      description: "Cho tất cả đơn trên 15 triệu VNĐ",
-    },
-    {
-      icon: "fa-solid fa-hand-holding-dollar",
-      title: "Thanh toán linh hoạt",
-      description: "Thanh toán thuận tiện & an toàn 100%",
-    },
-    {
-      icon: "fa-solid fa-headset",
-      title: "24/7 hỗ trợ ngay",
-      description: "Chuyên viên trực tổng đài 24/7",
-    },
-    {
-      icon: "fa-solid fa-business-time",
-      title: "Bảo hành & đổi trả dễ dàng",
-      description: "Bảo hành lên đến 1 năm",
-    },
-  ], []);
-
-  const banners = useMemo(() => [
-    {
-      url: "../../../public/banner1.png",
-    },
-    {
-      url: "../../../public/banner2.png",
-    },
-    {
-      url: "../../../public/banner3.png",
-    },
-  ], []);
+  const ads=[
+      {
+        icon: "fa-solid fa-truck",
+        title: "Miễn phí vận chuyển",
+        description: "Cho tất cả đơn trên 15 triệu VNĐ",
+      },
+      {
+        icon: "fa-solid fa-hand-holding-dollar",
+        title: "Thanh toán linh hoạt",
+        description: "Thanh toán thuận tiện & an toàn 100%",
+      },
+      {
+        icon: "fa-solid fa-headset",
+        title: "24/7 hỗ trợ ngay",
+        description: "Chuyên viên trực tổng đài 24/7",
+      },
+      {
+        icon: "fa-solid fa-business-time",
+        title: "Bảo hành & đổi trả dễ dàng",
+        description: "Bảo hành lên đến 1 năm",
+      },
+    ]
+  const banners =[
+      {
+        url: "../../../public/banner1.png",
+      },
+      {
+        url: "../../../public/banner2.png",
+      },
+      {
+        url: "../../../public/banner3.png",
+      },
+    ]
+   
 
   return (
     <HomeLayout>

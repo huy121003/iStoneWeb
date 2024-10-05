@@ -5,6 +5,7 @@ import { IProduct } from "../../models/IProduct";
 import { FetchCategoryApi } from "../../apis/CategoryApi";
 import { ICategories } from "../../models/ICategories";
 import SubpageCard from "../../components/SubpageCard";
+import { message } from "antd";
 
 function SubPage() {
   const { categoryId } = useParams(); // Lấy categoryId từ URL
@@ -20,33 +21,23 @@ function SubPage() {
   useEffect(() => {
     const fetchProducts = async () => {
       if (categoryId) {
-        try {
-          const fetchedProducts = await FetchProductApi(
-            Number(categoryId),
-            null,
-            "",
-           // searchText, // Thêm searchText vào đây
-            1, // Luôn gọi page 1
-            pageSize ,// Kích thước sản phẩm tùy thuộc vào pageSize
-            searchText
-          );
+        const fetchedProducts = await FetchProductApi(
+          Number(categoryId),
+          null,
+          "",
+          1,
+          pageSize,
+          searchText
+        );
 
-          // Sắp xếp sản phẩm theo sortOption
-          if (sortOption === "Giá thấp nhất") {
-            fetchedProducts.sort(
-              (a: IProduct, b: IProduct) => a.price - b.price
-            );
-          } else if (sortOption === "Giá cao nhất") {
-            fetchedProducts.sort(
-              (a: IProduct, b: IProduct) => b.price - a.price
-            );
-          }
-
-          setProducts(fetchedProducts);
-        } catch (error) {
-          console.error("Error fetching products:", error);
-          setError("Failed to fetch products.");
+        if (sortOption === "Giá thấp nhất") {
+          fetchedProducts.sort((a: IProduct, b: IProduct) => a.price - b.price);
+        } else if (sortOption === "Giá cao nhất") {
+          fetchedProducts.sort((a: IProduct, b: IProduct) => b.price - a.price);
         }
+        if (fetchedProducts?.status && fetchedProducts.status >= 400)
+          message.error(fetchedProducts.message);
+        else setProducts(fetchedProducts);
       }
     };
 
@@ -136,7 +127,7 @@ function SubPage() {
 
       {/* Thanh tìm kiếm và dropdown sắp xếp */}
 
-      <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-7">
+      <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-10 ">
         {products.length ? (
           products.map((product) => (
             <SubpageCard key={product.id} product={product} />
@@ -150,7 +141,7 @@ function SubPage() {
       {products.length >= pageSize && (
         <div className="flex justify-center mt-8">
           <button
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            className="bg-[#00B685] text-white px-4 py-2 rounded-3xl "
             onClick={handleLoadMore}
             disabled={isLoadingMore}
           >

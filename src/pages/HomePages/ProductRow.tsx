@@ -5,63 +5,85 @@ import { IProduct } from "../../models/IProduct";
 import { FetchProductApi } from "../../apis/ProductApi";
 import NotProduct from "../../components/NotProduct";
 import { useNavigate } from "react-router-dom";
+import { message } from "antd";
+
+// Memoize CardPhone to avoid unnecessary re-renders
+const MemoizedCardPhone = React.memo(CardPhone);
 
 interface IProductRowProps {
   category: ICategories;
 }
 
 const ProductRow: React.FC<IProductRowProps> = ({ category }) => {
-  const [categoryChildren, setCategoryChildren] = useState<number | null>(null);
-  const [products, setProducts] = useState<IProduct[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<IProduct[]>([]);
-  const [isOpen, setIsOpen] = useState(false);
-  const [sortOption, setSortOption] = useState<string>("");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [state, setState] = useState({
+    categoryChildren: null as number | null,
+    products: [] as IProduct[],
+    filteredProducts: [] as IProduct[],
+    sortOption: "",
+    currentPage: 1,
+    isOpen: false,
+  });
   const itemsPerPage = 5;
+  const navigate = useNavigate();
 
   const fetchProducts = useCallback(async () => {
-    try {
-      const fetchedProducts = await FetchProductApi(
-        category.id,
-        categoryChildren,
-        sortOption,
-        currentPage,
-        itemsPerPage
-      );
-      setProducts(fetchedProducts);
-      setFilteredProducts(fetchedProducts);
-    } catch (error) {
-      console.error("Error fetching products:", error);
-    }
-  }, [category.id, categoryChildren, sortOption, currentPage]);
+    const fetchedProducts = await FetchProductApi(
+      category.id,
+      state.categoryChildren,
+      state.sortOption,
+      state.currentPage,
+      itemsPerPage
+    );
+    if(fetchedProducts?.status&&fetchedProducts.status>=400) message.error(fetchedProducts.message)
+    setState((prevState) => ({
+      ...prevState,
+      products: fetchedProducts,
+      filteredProducts: fetchedProducts,
+    }));
+  }, [
+    category.id,
+    state.categoryChildren,
+    state.sortOption,
+    state.currentPage,
+  ]);
 
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
 
-  const handleChildrent = useCallback((id: number) => {
-    setCategoryChildren(id);
-    setCurrentPage(1); // Reset page when category changes
+  const handleCategoryChildren = useCallback((id: number) => {
+    setState((prevState) => ({
+      ...prevState,
+      categoryChildren: id,
+      currentPage: 1, // Reset page when category changes
+    }));
   }, []);
 
   const handleSort = (option: string) => {
-    setSortOption(option);
-    setIsOpen(false);
-    setCurrentPage(1); // Reset page when sorting changes
+    setState((prevState) => ({
+      ...prevState,
+      sortOption: option,
+      isOpen: false,
+      currentPage: 1, // Reset page when sorting changes
+    }));
   };
 
   const handleScroll = (direction: "left" | "right") => {
-    setCurrentPage((prevPage) => {
-      const newPage = direction === "right" ? prevPage + 1 : prevPage - 1;
-      return Math.max(newPage, 1); // Ensure page number does not go below 1
+    setState((prevState) => {
+      const newPage =
+        direction === "right"
+          ? prevState.currentPage + 1
+          : prevState.currentPage - 1;
+      return { ...prevState, currentPage: Math.max(newPage, 1) };
     });
   };
-  const navigate = useNavigate(); // Khởi tạo useNavigate
+
   const handleCategoryClick = (categoryId: number) => {
-    // Điều hướng đến trang SubPage với categoryId trong URL
-   //console.log(categoryId);
     navigate(`/subpage/${categoryId}`);
   };
+
+  const { filteredProducts, currentPage, isOpen } = state;
+
   return (
     <div className="gap-10 rounded-xl py-2 px-4 md:px-28 flex flex-col w-full">
       {/* Title and Description */}
@@ -80,13 +102,17 @@ const ProductRow: React.FC<IProductRowProps> = ({ category }) => {
             <div
               key={childrenCate.id}
               className={`gap-2 rounded-lg border p-2 cursor-pointer transition-colors duration-300 ${
-                categoryChildren === childrenCate.id ? "border-[#00B685] bg-[#E6F8F1]" : "border-gray-200"
+                state.categoryChildren === childrenCate.id
+                  ? "border-[#00B685] bg-[#E6F8F1]"
+                  : "border-gray-200"
               }`}
-              onClick={() => handleChildrent(childrenCate.id)}
+              onClick={() => handleCategoryChildren(childrenCate.id)}
             >
               <p
-                className={`font-normal text-xs ${
-                  categoryChildren === childrenCate.id ? "text-[#00B685]" : "text-gray-700"
+                className={`font-normal text-xl ${
+                  state.categoryChildren === childrenCate.id
+                    ? "text-[#00B685] font-bold"
+                    : "text-gray-700"
                 }`}
               >
                 {childrenCate.name}
@@ -96,17 +122,22 @@ const ProductRow: React.FC<IProductRowProps> = ({ category }) => {
         </div>
 
         {/* Sorting Menu */}
-        <div className="relative">
+        <div className="">
           <div
             className="flex justify-between rounded-3xl h-9 border w-40 px-3 items-center cursor-pointer"
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={() =>
+              setState((prevState) => ({
+                ...prevState,
+                isOpen: !prevState.isOpen,
+              }))
+            }
           >
             <p>Lọc</p>
             <i className="fa-solid fa-circle-chevron-down"></i>
           </div>
 
           {isOpen && (
-            <ul className="absolute top-full mt-2 w-40 bg-white border rounded-lg shadow-lg z-10">
+            <ul className=" top-full mt-2 w-40 bg-white border rounded-lg shadow-lg z-10">
               {["best-seller", "DESC", "ASC"].map((option) => (
                 <li
                   key={option}
@@ -126,39 +157,42 @@ const ProductRow: React.FC<IProductRowProps> = ({ category }) => {
       </div>
 
       {/* Product Cards & Pagination */}
-      <div className="flex justify-center items-center overflow-hidden">
-        <button
-          className="p-4 border rounded-full"
-          onClick={() => handleScroll("left")}
-          disabled={currentPage === 1}
-        >
-          &lt;
-        </button>
+      <div className="flex justify-center items-center overflow-hidden relative">
+        {currentPage > 1 && (
+          <button
+            className="absolute left-0 border rounded-full w-[56px] h-[56px] p-2 bg-[#3C3C432E]"
+            onClick={() => handleScroll("left")}
+          >
+            <i className="fa-solid fa-chevron-left text-xl font-bold"></i>
+          </button>
+        )}
 
-        <div className="flex gap-2 columns-2">
+        <div className="flex gap-7">
           {filteredProducts.length > 0 ? (
             filteredProducts.map((product) => (
-              <CardPhone key={product.id} product={product} />
+              <MemoizedCardPhone key={product.id} product={product} />
             ))
           ) : (
             <NotProduct />
           )}
         </div>
 
-        <button
-          className="p-4 border rounded-full"
-          onClick={() => handleScroll("right")}
-          disabled={filteredProducts.length < itemsPerPage}
-        >
-          &gt;
-        </button>
+        {filteredProducts.length === itemsPerPage && (
+          <button
+            className="absolute right-0 border rounded-full w-[56px] h-[56px] p-2 bg-[#3C3C432E]"
+            onClick={() => handleScroll("right")}
+          >
+            <i className="fa-solid fa-chevron-right text-xl font-bold"></i>
+          </button>
+        )}
       </div>
 
       {/* View All Link */}
-      <div className="flex justify-center text-center mt-4"
-      >
-        <p className="text-green-400 cursor-pointer hover:underline"
-        onClick={()=>handleCategoryClick(category.id)}>
+      <div className="flex justify-center text-center mt-4">
+        <p
+          className="text-green-400 cursor-pointer hover:underline"
+          onClick={() => handleCategoryClick(category.id)}
+        >
           Xem toàn bộ &gt;&gt;
         </p>
       </div>

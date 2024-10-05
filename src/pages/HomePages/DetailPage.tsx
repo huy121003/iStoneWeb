@@ -3,24 +3,22 @@ import { useParams } from "react-router-dom";
 
 import { IProduct } from "../../models/IProduct";
 import { FetchProductDetailApi } from "../../apis/ProductApi";
+import { message } from "antd";
 
 const DetailPage: React.FC = () => {
   const { productId } = useParams();
-  const [selectedAttributes, setSelectedAttributes] = useState<{ [key: string]: number | null }>({});
+  const [selectedAttributes, setSelectedAttributes] = useState<{
+    [key: string]: number | null;
+  }>({});
   const [product, setProduct] = useState<IProduct>();
 
   useEffect(() => {
     const fetchProduct = async () => {
-      try {
-        if (productId) {
-          const response = await FetchProductDetailApi(Number(productId));
-          setProduct(response);
-        } else {
-          console.error("Product ID is undefined");
-        }
-      } catch (error) {
-        console.error("Error fetching product:", error);
-      }
+   
+        const response = await FetchProductDetailApi(Number(productId));
+        if(response?.status&&response.status>=400) message.error(response.message)
+        else setProduct(response);
+     
     };
     fetchProduct();
   }, [productId]);
@@ -33,20 +31,25 @@ const DetailPage: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex-row - p-4 bg-gray-100 mt-[96px]">
+    <div className="flex-1 flex-row -  bg-[#FFFFFF] mt-[96px] ">
       {/* Left Section: Product Image */}
-      <div className="flex flex-1">
+      <div className="flex flex-1 justify-start items-center gap-2  px-4 md:px-10 lg:px-28 py-8">
         <i className="fa-solid fa-home text-black" />
         {product && (
           <>
-            <p className="text-black font-2xl">{product.category1?.name} {">"}</p>
-            <p className="text-black font-2xl">{product.category2?.name} {">"}</p>
-            <p className="text-black font-2xl">{product.name}</p>
+            <p className="text-black font-2xl">
+            {product.category1!==null&& `${product.category1.name} >`}
+            </p>
+            <p className="text-black font-2xl">
+              {product.category2!==null&& `${product.category2.name} >`}
+            </p>
+            <p className="text-green-400 font-2xl ">{product.name}</p>
           </>
         )}
       </div>
-      <div className="flex-1 flex">
-        <div className="md:w-1/2 flex justify-center items-center">
+      <div className="h-[100px]"></div>
+      <div className="flex-1 flex  px-4 md:px-10 lg:px-28 ">
+        <div className="md:w-1/2 flex justify-center items-center ">
           <img
             src={product?.images[0]} // Replace with the actual image URL
             alt={product?.name}
@@ -64,7 +67,11 @@ const DetailPage: React.FC = () => {
                   {attr.values.map((value, index) => (
                     <div
                       key={index}
-                      className={`border p-4 gap-2 ${selectedAttributes[attr.name] === index ? "border-green-400" : "border-gray-400"} rounded-xl mx-1`}
+                      className={`border p-4 gap-2 ${
+                        selectedAttributes[attr.name] === index
+                          ? "border-green-400  bg-[#E6F8F1]"
+                          : "border-gray-400"
+                      } rounded-xl mx-1`}
                       onClick={() => handleAttributeClick(attr.name, index)}
                     >
                       <p className="text-lg font-normal">{value.value}</p>
@@ -77,13 +84,13 @@ const DetailPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="justify-end flex-1 flex">
-        <div className="justify-center items-center">
-          <h2 className="text-2xl font-bold my-4">
-            {product?.salePrice?.toLocaleString()} đ
+      <div className="justify-end flex-1 flex  items-center bg-[#F4F5F8]  px-4 md:px-10 lg:px-28 py-[24px] my-[100px] border-t border-[#B3B3B3]">
+        <div className="justify-center items-center ">
+          <h2 className="text-2xl font-bold ">
+            {product?.salePrice?.toLocaleString()}đ
           </h2>
         </div>
-        <button className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600">
+        <button className="bg-[#00B685] text-white  rounded-3xl hover:bg-green-600 text-xl p-2 mx-10">
           Thêm vào giỏ hàng
         </button>
       </div>

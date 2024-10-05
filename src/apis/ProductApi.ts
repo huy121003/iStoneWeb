@@ -1,6 +1,9 @@
 import apiHandler from "./apiConfig";
 import { ApiMethods } from "./apiMethods";
+import queryString from "query-string";
+import { handleApiError } from "./apiErrorHandler";
 
+// Fetch all products with optional query parameters
 export const FetchProductApi = async (
   categoryId: number,
   categoryChildren: number | null,
@@ -10,30 +13,38 @@ export const FetchProductApi = async (
   keyword?: string
 ) => {
   try {
+    const queryParams = queryString.stringify({
+      page,
+      take: itemsPerPage,
+      categoryId,
+      categoryChildren: categoryChildren || undefined, // Bỏ qua nếu null
+      order: sortOption || undefined, // Bỏ qua nếu rỗng
+      keyword: keyword || undefined, // Bỏ qua nếu rỗng
+    });
+
     const response = await apiHandler(
       ApiMethods.GET,
-      `/api/v1/product?page=${page}&take=${itemsPerPage}&categoryId=${categoryId}${
-        categoryChildren ? `&categoryChildren=${categoryChildren}` : ""
-      }${sortOption ? `&order=${sortOption}` : ""}${keyword ? `&keyword=${keyword}` : ""}`
+      `/api/v1/product?${queryParams}`
     );
 
-    console.log(
-      `/api/v1/product?page=${page}&take=${itemsPerPage}&categoryId=${categoryId}${
-        categoryChildren ? `&categoryChildren=${categoryChildren}` : ""
-      }${sortOption ? `&sortBy=${sortOption}` : ""}`
-    );
-    return response.data; // Hoặc điều chỉnh theo cấu trúc dữ liệu bạn nhận được
+    console.log(`/api/v1/product?${queryParams}`);
+    return response.data;
   } catch (error: any) {
-    console.error("Error Message:", error.message);
-    throw error; // Ném lại lỗi để có thể xử lý ở nơi gọi hàm
+    const errorDetails = handleApiError(error);
+    return errorDetails; // Hoặc throw errorDetails để bắt ở component
   }
 };
+
+// Fetch product details by ID
 export const FetchProductDetailApi = async (id: number) => {
   try {
-    const response = await apiHandler(ApiMethods.GET, `/api/v1/product/${id}/parent`);
-    //console.log("Response:", response);
+    const response = await apiHandler(
+      ApiMethods.GET,
+      `/api/v1/product/${id}/parent`
+    );
     return response;
   } catch (error: any) {
-    console.error("Error Message:", error.message);
+    const errorDetails = handleApiError(error);
+    return errorDetails; // Hoặc throw errorDetails để bắt ở component
   }
 };
