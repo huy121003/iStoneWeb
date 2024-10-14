@@ -5,7 +5,9 @@ import { IProduct } from "../../models/IProduct";
 import { FetchProductApi } from "../../apis/ProductApi";
 import NotProduct from "../../components/NotProduct";
 import { useNavigate } from "react-router-dom";
-import { message } from "antd";
+import { Button, Dropdown, Menu, message } from "antd";
+import queryString from "query-string";
+import DropdownButton from "antd/es/dropdown/dropdown-button";
 
 // Memoize CardPhone to avoid unnecessary re-renders
 const MemoizedCardPhone = React.memo(CardPhone);
@@ -15,80 +17,91 @@ interface IProductRowProps {
 }
 
 const ProductRow: React.FC<IProductRowProps> = ({ category }) => {
-  const [state, setState] = useState({
-    categoryChildren: null as number | null,
-    products: [] as IProduct[],
-    filteredProducts: [] as IProduct[],
-    sortOption: "",
-    currentPage: 1,
-    isOpen: false,
-  });
+  // State specific to each ProductRow
+  const [categoryId, setCategoryId] = useState<number>(category.id);
+  const [products, setProducts] = useState<IProduct[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<IProduct[]>([]);
+  const [sortOption, setSortOption] = useState("");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+
+  const [keyword, setKeyword] = useState<string>("");
   const itemsPerPage = 5;
   const navigate = useNavigate();
 
-  const fetchProducts = useCallback(async () => {
-    const fetchedProducts = await FetchProductApi(
-      category.id,
-      state.categoryChildren,
-      state.sortOption,
-      state.currentPage,
-      itemsPerPage
-    );
-    if(fetchedProducts?.status&&fetchedProducts.status>=400) message.error(fetchedProducts.message)
-    setState((prevState) => ({
-      ...prevState,
-      products: fetchedProducts,
-      filteredProducts: fetchedProducts,
-    }));
-  }, [
-    category.id,
-    state.categoryChildren,
-    state.sortOption,
-    state.currentPage,
-  ]);
-
   useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+    const fetchProducts = async () => {
+      // Create query string dynamically, skipping null/empty values
 
-  const handleCategoryChildren = useCallback((id: number) => {
-    setState((prevState) => ({
-      ...prevState,
-      categoryChildren: id,
-      currentPage: 1, // Reset page when category changes
-    }));
+      const stringQuery = queryString.stringify(
+        {
+          page: currentPage,
+          categoryId: categoryId,
+          //category1Id: categoryChildren,
+          //categoryChildren: categoryChildren,
+          order: sortOption,
+
+          take: itemsPerPage,
+          keyword: keyword,
+        },
+        { skipNull: true, skipEmptyString: true }
+      );
+
+      console.log("Query:", stringQuery);
+
+      const res = await FetchProductApi(stringQuery);
+
+      if (res?.status && res.status >= 400) {
+        message.error(res.message);
+      } else {
+        setProducts(res.data);
+        setFilteredProducts(res.data); // Copy the fetched products to filteredProducts
+      }
+    };
+
+    fetchProducts();
+  }, [category.id, categoryId, sortOption, currentPage]);
+
+  const handleCategoryChildren = useCallback((id: number, keyword: string) => {
+    //setKeyword(keyword);
+    setCategoryId(id);
+    setCurrentPage(1); // Reset to the first page when category changes
   }, []);
 
   const handleSort = (option: string) => {
-    setState((prevState) => ({
-      ...prevState,
-      sortOption: option,
-      isOpen: false,
-      currentPage: 1, // Reset page when sorting changes
-    }));
+    setSortOption(option);
+    // Close the dropdown after selecting a sort option
+    setCurrentPage(1); // Reset to the first page when sorting changes
   };
+  const sortOptions = [
+    //{ label: 'Bán chạy nhất', value: 'best-seller' },
+    { label: "Giá giảm dần", value: "DESC" },
+    { label: "Giá tăng dần", value: "ASC" },
+  ];
 
+  const menu = (
+    <Menu onClick={(e) => handleSort(e.key)}>
+      {sortOptions.map((option) => (
+        <Menu.Item key={option.value}>{option.label}</Menu.Item>
+      ))}
+    </Menu>
+  );
   const handleScroll = (direction: "left" | "right") => {
-    setState((prevState) => {
-      const newPage =
-        direction === "right"
-          ? prevState.currentPage + 1
-          : prevState.currentPage - 1;
-      return { ...prevState, currentPage: Math.max(newPage, 1) };
-    });
+    setCurrentPage((prevPage) =>
+      direction === "right" ? prevPage + 1 : Math.max(prevPage - 1, 1)
+    );
   };
 
   const handleCategoryClick = (categoryId: number) => {
     navigate(`/subpage/${categoryId}`);
   };
 
-  const { filteredProducts, currentPage, isOpen } = state;
-
   return (
     <div className="gap-10 rounded-xl py-2 px-4 md:px-28 flex flex-col w-full">
       {/* Title and Description */}
       <div className="justify-start md:flex-row flex-col flex mb-4">
-        <h2 className="text-black text-3xl font-bold">{category.name}</h2>
+        <h2 className="text-black text-3xl font-bold mr-[10px]">
+          {category.name}
+        </h2>
         <p className="text-gray-500 text-3xl font-bold">
           {category.description}
         </p>
@@ -102,15 +115,17 @@ const ProductRow: React.FC<IProductRowProps> = ({ category }) => {
             <div
               key={childrenCate.id}
               className={`gap-2 rounded-lg border p-2 cursor-pointer transition-colors duration-300 ${
-                state.categoryChildren === childrenCate.id
+                categoryId === childrenCate.id
                   ? "border-[#00B685] bg-[#E6F8F1]"
                   : "border-gray-200"
               }`}
-              onClick={() => handleCategoryChildren(childrenCate.id)}
+              onClick={() =>
+                handleCategoryChildren(childrenCate.id, childrenCate.name)
+              }
             >
               <p
                 className={`font-normal text-xl ${
-                  state.categoryChildren === childrenCate.id
+                  categoryId === childrenCate.id
                     ? "text-[#00B685] font-bold"
                     : "text-gray-700"
                 }`}
@@ -122,38 +137,12 @@ const ProductRow: React.FC<IProductRowProps> = ({ category }) => {
         </div>
 
         {/* Sorting Menu */}
-        <div className="">
-          <div
-            className="flex justify-between rounded-3xl h-9 border w-40 px-3 items-center cursor-pointer"
-            onClick={() =>
-              setState((prevState) => ({
-                ...prevState,
-                isOpen: !prevState.isOpen,
-              }))
-            }
-          >
-            <p>Lọc</p>
-            <i className="fa-solid fa-circle-chevron-down"></i>
-          </div>
 
-          {isOpen && (
-            <ul className=" top-full mt-2 w-40 bg-white border rounded-lg shadow-lg z-10">
-              {["best-seller", "DESC", "ASC"].map((option) => (
-                <li
-                  key={option}
-                  className="px-4 py-2 hover:bg-gray-200 cursor-pointer transition-colors duration-200"
-                  onClick={() => handleSort(option)}
-                >
-                  {option === "best-seller"
-                    ? "Bán chạy nhất"
-                    : option === "DESC"
-                    ? "Giá giảm dần"
-                    : "Giá tăng dần"}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        <Dropdown overlay={menu} trigger={["click"]}>
+          <Button>
+            Lọc <i className="fa-solid fa-caret-down"></i>
+          </Button>
+        </Dropdown>
       </div>
 
       {/* Product Cards & Pagination */}

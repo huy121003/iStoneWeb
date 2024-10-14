@@ -54,12 +54,12 @@ const CardPhone: React.FC<CardPhoneProps> = ({ product }) => {
 
       {/* Price Display */}
       <div className="flex space-x-2 items-center">
-        <p className="text-gray-500 line-through">
+        <p className="text-blue-500 font-bold text-lg">
           {product.price.toLocaleString()}đ
         </p>
-        <p className="text-blue-500 font-bold text-lg">
+        {/* <p className="text-blue-500 font-bold text-lg">
           {product.salePrice.toLocaleString()}đ
-        </p>
+        </p> */}
       </div>
     </div>
   );

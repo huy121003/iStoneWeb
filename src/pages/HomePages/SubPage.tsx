@@ -1,61 +1,65 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { FetchProductApi } from "../../apis/ProductApi";
 import { IProduct } from "../../models/IProduct";
 import { FetchCategoryApi } from "../../apis/CategoryApi";
 import { ICategories } from "../../models/ICategories";
 import SubpageCard from "../../components/SubpageCard";
-import { message } from "antd";
+import { Button, Dropdown, Menu, message } from "antd";
+import queryString from "query-string";
 
 function SubPage() {
-  const { categoryId } = useParams(); // Lấy categoryId từ URL
+  const { categoryId } = useParams();
+  const [categoryID, setCategoryID] = useState<number>(Number(categoryId));
   const [products, setProducts] = useState<IProduct[]>([]);
   const [category, setCategory] = useState<ICategories | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [pageSize, setPageSize] = useState(20); // Kích thước ban đầu là 20 sản phẩm
+  const [pageSize, setPageSize] = useState(20);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [searchText, setSearchText] = useState(""); // Trạng thái cho tìm kiếm
-  const [sortOption, setSortOption] = useState("Bán chạy nhất"); // Trạng thái cho sắp xếp
-
+  const [sortOption, setSortOption] = useState("");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  useEffect(() => {
+    setCategoryID(Number(categoryId));
+    //setCurrentPage(1); // Reset to page 1 when category changes
+  }, [categoryId]);
+  // Fetch products and category data
   useEffect(() => {
     const fetchProducts = async () => {
-      if (categoryId) {
-        const fetchedProducts = await FetchProductApi(
-          Number(categoryId),
-          null,
-          "",
-          1,
-          pageSize,
-          searchText
+      if (categoryID) {
+        const stringQuery = queryString.stringify(
+          {
+            page: currentPage,
+            categoryId: categoryID,
+            order: sortOption,
+            take: pageSize,
+          },
+          { skipNull: true, skipEmptyString: true }
         );
 
-        if (sortOption === "Giá thấp nhất") {
-          fetchedProducts.sort((a: IProduct, b: IProduct) => a.price - b.price);
-        } else if (sortOption === "Giá cao nhất") {
-          fetchedProducts.sort((a: IProduct, b: IProduct) => b.price - a.price);
+        const fetchedProducts = await FetchProductApi(stringQuery);
+        if (fetchedProducts?.status && fetchedProducts.status >= 400) {
+          setError(fetchedProducts.message);
+        } else {
+          setProducts(fetchedProducts.data);
         }
-        if (fetchedProducts?.status && fetchedProducts.status >= 400)
-          message.error(fetchedProducts.message);
-        else setProducts(fetchedProducts);
       }
     };
 
     const fetchCategory = async () => {
       if (categoryId) {
         try {
-          const allCategories = await FetchCategoryApi(); // Giả sử gọi tất cả categories
+          const allCategories = await FetchCategoryApi();
           const matchedCategory = allCategories.find(
             (category: ICategories) => category.id === Number(categoryId)
           );
           if (matchedCategory) {
             setCategory(matchedCategory);
           } else {
-            setError("Category not found.");
+            // message.error("Không tìm thấy danh mục.");
           }
         } catch (error) {
-          console.error("Error fetching category:", error);
-          setError("Failed to fetch category.");
+          message.error("Có lỗi xảy ra khi tải danh mục.");
         }
       }
     };
@@ -68,13 +72,18 @@ function SubPage() {
     };
 
     fetchData();
-  }, [categoryId, pageSize, searchText, sortOption]); // Khi pageSize, searchText hoặc sortOption thay đổi, gọi lại API
+  }, [categoryId, pageSize, sortOption, currentPage, categoryID]);
 
   const handleLoadMore = () => {
     setIsLoadingMore(true);
-    setPageSize((prevSize) => prevSize + 20); // Tăng kích thước page lên 20 mỗi lần
+    setPageSize((prevSize) => prevSize + 20);
     setIsLoadingMore(false);
   };
+
+  const handleCategoryChildren = useCallback((id: number) => {
+    setCategoryID(id);
+    setCurrentPage(1);
+  }, []);
 
   if (loading) {
     return <div>Loading...</div>;
@@ -83,65 +92,78 @@ function SubPage() {
   if (error) {
     return <div className="text-red-500 mt-[96px]">{error}</div>;
   }
-
+  const sortOptions = [
+    //{ label: 'Bán chạy nhất', value: 'best-seller' },
+    { label: "Giá giảm dần", value: "DESC" },
+    { label: "Giá tăng dần", value: "ASC" },
+  ];
+  const handleSort = (option: string) => {
+    setSortOption(option);
+    // Close the dropdown after selecting a sort option
+    setCurrentPage(1); // Reset to the first page when sorting changes
+  };
+  const menu = (
+    <Menu onClick={(e) => handleSort(e.key)}>
+      {sortOptions.map((option) => (
+        <Menu.Item key={option.value}>{option.label}</Menu.Item>
+      ))}
+    </Menu>
+  );
   return (
     <div className="container mx-auto p-4 mt-[96px]">
       <div className="flex flex-1 justify-center items-center">
-        {" "}
-        <div className=" flex-1">
+        <div className="flex-1">
           {category && (
-            <div className="flex-1 flex">
-              <img
-                src={category.icon}
-                alt={category.name}
-                className="w-24 h-24 mb-4"
-              />
-              <h2 className="text-3xl font-bold text-[#00B685]">
-                {category.name}
-              </h2>
-            </div>
+            <h2 className="text-3xl font-bold text-[#00B685]">
+              {category.name}
+            </h2>
           )}
         </div>
-        <div className="flex mb-6 justify-between items-center">
-          <input
-            type="text"
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            placeholder="Nhập từ khóa tìm kiếm..."
-            className="border rounded-lg p-2 flex-1 mr-4"
-          />
-
-          <div className="relative">
-            <select
-              value={sortOption}
-              onChange={(e) => setSortOption(e.target.value)}
-              className="border rounded-lg p-2"
-            >
-              <option value="Bán chạy nhất">Bán chạy nhất</option>
-              <option value="Giá thấp nhất">Giá thấp nhất</option>
-              <option value="Giá cao nhất">Giá cao nhất</option>
-            </select>
-          </div>
-        </div>
+        <Dropdown overlay={menu} trigger={["click"]}>
+          <Button>
+            Lọc <i className="fa-solid fa-caret-down"></i>
+          </Button>
+        </Dropdown>
       </div>
 
-      {/* Thanh tìm kiếm và dropdown sắp xếp */}
+      <div className="flex gap-2 mb-4">
+        {category?.children?.map((childrenCate) => (
+          <div
+            key={childrenCate.id}
+            className={`gap-2 rounded-lg border p-2 cursor-pointer transition-colors duration-300 ${
+              categoryID === childrenCate.id
+                ? "border-[#00B685] bg-[#E6F8F1]"
+                : "border-gray-200"
+            }`}
+            onClick={() => handleCategoryChildren(childrenCate.id)}
+          >
+            <p
+              className={`font-normal text-xl ${
+                categoryID === childrenCate.id
+                  ? "text-[#00B685] font-bold"
+                  : "text-gray-700"
+              }`}
+            >
+              {childrenCate.name}
+            </p>
+          </div>
+        ))}
+      </div>
 
-      <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-10 ">
+      <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-10">
         {products.length ? (
           products.map((product) => (
             <SubpageCard key={product.id} product={product} />
           ))
         ) : (
-          <li className="col-span-full text-center">No products found.</li>
+          <li className="col-span-full text-center">Không có sản phẩm nào.</li>
         )}
       </ul>
 
-      {/* Load More Button */}
       {products.length >= pageSize && (
         <div className="flex justify-center mt-8">
           <button
-            className="bg-[#00B685] text-white px-4 py-2 rounded-3xl "
+            className="bg-[#00B685] text-white px-4 py-2 rounded-3xl"
             onClick={handleLoadMore}
             disabled={isLoadingMore}
           >

@@ -7,10 +7,10 @@ interface HomeLayoutProps {
 
 function HomeLayout({ children }: HomeLayoutProps) {
   return (
-    <div className={`flex-1 max-h-screen overflow-y-auto`}>
+    <div className={`flex-1 max-h-[100vh] overflow-y-auto`}>
       <Header />
        
-      <div className="flex-1 ">{children}</div>
+      <div className="">{children}</div>
     </div>
   );
 }
