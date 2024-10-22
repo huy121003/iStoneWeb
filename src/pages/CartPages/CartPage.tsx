@@ -63,7 +63,7 @@ const CartPage: React.FC = () => {
   );
 
   return (
-    <div className=" flex-col items-center mt-[96px] flex-1">
+    <div className=" flex-col  mt-[96px] flex-1">
       <div className=" flex items-center ml-[20px]">
         <i className="fa-solid fa-home" onClick={() => navigate("/")} />
         <p className="text-xl font-bold text-green-500"> {" >"} Giỏ hàng</p>
