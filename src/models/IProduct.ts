@@ -33,4 +33,5 @@ export interface IProduct {
             ]
         }
     ]
+    child: any[];
 }

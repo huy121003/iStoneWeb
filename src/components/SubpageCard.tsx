@@ -20,19 +20,19 @@ const SubpageCard: React.FC<SubpageCardProps> = ({ product }) => {
 
   return (
     <div
-      className="w-[304px] rounded-md py-4 px-8 gap-4 bg-white justify-center items-center shadow-md flex flex-col"
+      className="lg:w-auto w-auto h-[200px] md:h-[400px] rounded-md p-2 lg:gap-4 bg-white justify-center items-center shadow-md flex flex-col"
       onClick={handleProductClick}
     >
       <img
         src={product.images?.[0] || "default-image.jpg"}  // Kiểm tra hình ảnh
         alt={product.name || "No name available"}
         aria-label={`Image of ${product.name || "unknown product"}`}  // Tăng khả năng truy cập
-        className="w-full h-48 object-cover"
+        className="lg:w-full lg:h-48 w-[150px] h-[150px] object-cover"
       />
-      <h3 className="text-2xl font-semibold">
+      <h3 className="lg:text-2xl  font-semibold">
         {truncateText(product.name, 20)}
       </h3>
-      <div className="flex-1 flex gap-2 flex-wrap ">
+      <div className="flex-1 md:flex gap-2 md:flex-wrap  hidden">
         {product?.attribute?.length ? (
           product.attribute.map((attr, index) => (
             <div

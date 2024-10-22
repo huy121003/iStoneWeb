@@ -6,12 +6,13 @@ import { message } from "antd";
 
 const DetailPage: React.FC = () => {
   const [currentImage, setCurrentImage] = useState<string | undefined>();
+  const [image, setImage] = useState<string | undefined>();
   const { productId } = useParams();
-  const [selectedAttributes, setSelectedAttributes] = useState<
-    Record<string, number | null>
-  >({});
+  const [childProducts, setChildProducts] = useState<any[]>([]);
+  const [selectedAttributes, setSelectedAttributes] = useState<Record<string, any>>({});
   const [product, setProduct] = useState<IProduct>();
 
+  const [addProductToCart,setAddProductToCart]=useState<any>({})
   useEffect(() => {
     const fetchProduct = async () => {
       const response = await FetchProductDetailApi(Number(productId));
@@ -19,37 +20,74 @@ const DetailPage: React.FC = () => {
         message.error(response.message);
       } else {
         setProduct(response);
+        console.log(response)
         setCurrentImage(response.images[0]);
+        
+        setChildProducts(response.child);
+        const initialAttributes = response.attribute.reduce((acc: any, attr: any) => {
+          acc[attr.name] = attr.values[0].value;
+          return acc;
+        }, {});
+       
+        console.log("ggg",image)
+       
+        setSelectedAttributes(initialAttributes);
+     
+        
       }
     };
     fetchProduct();
   }, [productId]);
+useEffect(() => {
+  const updatePrice = () => {
+    const selectedChildProduct = childProducts.find((child) => {
+      return Object.keys(selectedAttributes).every((key,index) => {
+       
+        return selectedAttributes[key] === child.variations[index].value;
+      });
+    });
+ 
+    if (selectedChildProduct) {
+      setAddProductToCart(selectedChildProduct);
+      if(selectedChildProduct.images.length > 0){
+        setImage(selectedChildProduct.images[0])
+      }
+      else setImage(product?.images[0]);
+      setCurrentImage(product?.images[0]);
+     console.log('ee',image)
+     
+console.log(selectedChildProduct)
+    
+      
+    }
+  }
 
-  const handleAttributeClick = (attrName: string, index: number) => {
-    setSelectedAttributes((prev) => ({
-      ...prev,
-      [attrName]: index,
-    }));
-  };
+  updatePrice();
+}, [selectedAttributes, childProducts, product]);
 
-  const getCartItems = () => {
-    return JSON.parse(localStorage.getItem("cart") || "[]");
-  };
+const handleAttributeClick = (attrName: string, index: number) => {
+  setSelectedAttributes((prev) => ({
+    ...prev,
+    [attrName]: product?.attribute.find(attr => attr.name === attrName)?.values[index].value,
+  }));
+};
+
+ 
+ 
+
+  const getCartItems = () => JSON.parse(localStorage.getItem("cart") || "[]");
 
   const saveCartItems = (cart: any[]) => {
     localStorage.setItem("cart", JSON.stringify(cart));
   };
 
-  const updateCartItemQuantity = (
-    cart: any[],
-    cartItem: any,
-    quantity: number
-  ) => {
+  const updateCartItemQuantity = (cart: any[], cartItem: any, quantity: number) => {
     const existingItemIndex = cart.findIndex(
       (item: any) =>
         item.id === cartItem.id &&
         JSON.stringify(item.attributes) === JSON.stringify(cartItem.attributes)
     );
+
     if (existingItemIndex >= 0) {
       cart[existingItemIndex].quantity += quantity;
       return cart[existingItemIndex].quantity;
@@ -58,161 +96,128 @@ const DetailPage: React.FC = () => {
   };
 
   const handleAddToCart = () => {
-    const attributesSelected = product?.attribute
-      ?.map((attr) => {
-        const selectedValueIndex = selectedAttributes[attr.name];
-        return selectedValueIndex !== undefined
-          ? `${attr.name}: ${attr.values[selectedValueIndex!].value}`
-          : null;
-      })
-      .filter(Boolean);
 
-    const cartItem = {
-      id: product?.id,
-      name: product?.name,
-      price: product?.price,
-      quantity: 1,
-      attributes: attributesSelected || [],
-      image: currentImage,
-    };
+const cartItem = {
 
+  ...addProductToCart,
+  imageProduct: currentImage,
+  quantity: 1,
+
+  
+};
+console.log(cartItem)
     const cart = getCartItems();
 
-    if (attributesSelected && attributesSelected.length > 0) {
-      const allAttributesSelected = product?.attribute?.every(
-        (attr) => selectedAttributes[attr.name] !== null
-      );
+    const updatedQuantity = updateCartItemQuantity(cart, cartItem, 1);
 
-      if (!allAttributesSelected) {
-        message.error("Vui lòng chọn đầy đủ các thuộc tính.");
-        return;
-      }
-      const updatedQuantity = updateCartItemQuantity(cart, cartItem, 1);
-      if (updatedQuantity) {
-        message.success(
-          `Đã tăng số lượng sản phẩm: ${product?.name} lên ${updatedQuantity}`
-        );
-      } else {
-        cart.push(cartItem);
-        message.success(
-          `Đã thêm vào giỏ hàng: ${
-            product?.name
-          } với các thuộc tính: ${attributesSelected.join(", ")}`
-        );
-      }
+    if (updatedQuantity) {
+      message.success(`Đã tăng số lượng sản phẩm: ${product?.name} lên ${updatedQuantity}`);
     } else {
-      const updatedQuantity = updateCartItemQuantity(cart, cartItem, 1);
-      if (updatedQuantity) {
-        message.success(
-          `Đã tăng số lượng sản phẩm: ${product?.name} lên ${updatedQuantity}`
-        );
-      } else {
-        cart.push(cartItem);
-        message.success(`Đã thêm vào giỏ hàng: ${product?.name}`);
-      }
+      // Nếu sản phẩm chưa có trong giỏ, thêm sản phẩm mới vào giỏ hàng
+      cart.push(cartItem);
+      message.success(`Đã thêm vào giỏ hàng: ${product?.name}`);
     }
-
+  
     saveCartItems(cart);
   };
+
   const navigate = useNavigate();
+
   return (
     <div className="flex-1 flex-row bg-[#FFFFFF] mt-[96px]">
       {/* Left Section: Product Image */}
-      <div className="flex flex-1 justify-start items-center gap-2 px-4 md:px-10 lg:px-28 py-8">
-        <i className="fa-solid fa-home text-black" />
+      <div className="flex flex-1 justify-start items-center lg:gap-2 px-4 md:px-10 lg:px-28 py-8">
+        <button>
+          <i className="fa-solid fa-home text-black lg:text-2xl mr-2" />
+        </button>
+        <p className="text-black lg:text-2xl">&gt;</p>
         {product && (
           <>
-            <p
-              className="text-black font-2xl"
+            <button
+              className="text-gray-300 lg:text-2xl hover:bg-gray-300 hover:text-black justify-center items-center px-2 rounded-md"
               onClick={() => navigate(`/subpage/${product.category1?.id}`)}
             >
-              {product.category1?.name && `${product.category1.name} >`}
-            </p>
-            <p
-              className="text-black font-2xl"
+              {product.category1?.name && ` ${product.category1.name} `}
+            </button>
+            <p className="text-black lg:text-2xl">&gt;</p>
+            <button
+              className="text-gray-300 lg:text-2xl hover:bg-gray-300 hover:text-black justify-center items-center px-2 rounded-md"
               onClick={() => navigate(`/subpage/${product.category2?.id}`)}
             >
-              {product.category2?.name && `${product.category2.name} >`}
-            </p>
-            <p className="text-green-400 font-2xl ">{product.name}</p>
+              {product.category2?.name && `${product.category2.name} `}
+            </button>
+            <p className="text-black lg:text-2xl">{product.category2?.name && '>'}</p>
+            <p className="text-green-400 lg:text-2xl ">    {product.name.length > 20 ? product.name.substring(0, 20) + '...' : product.name}</p>
           </>
         )}
       </div>
-      <div className="h-[100px] flex-1 justify-center items-center "></div>
+
       <div className="flex-1 lg:flex px-4 md:px-10 lg:px-28 lg:justify-between">
-        <div className="justify-center items-center">
+        <div className="justify-center items-center flex-1 lg:mr-[200px] flex flex-col">
           <img
             src={currentImage}
             alt={product?.name}
-            className="w-full h-auto max-w-md"
+            className="lg:w-[500px] lg:h-[500px] md:w-[350px] md:h-[350px] w-[250px] h-[250px] rounded-md bg-gray-100"
           />
-          <div className="flex border border-gray-300 p-2 gap-3 rounded-md">
-            {product?.images.map((img, index) => (
+          <div className="flex gap-4 py-4">
+            {product?.images.map((image) => (
               <img
-                key={index}
-                src={img}
+                key={image}
+                src={image}
                 alt={product?.name}
-                className="w-[80px] h-[80px] object-cover mx-1 cursor-pointer"
-                onClick={() => setCurrentImage(img)}
+                className="cursor-pointer w-[80px] h-[80px] rounded-md bg-gray-100"
+                onClick={() => setCurrentImage(image)}
               />
             ))}
           </div>
         </div>
-        <div>
-          <div>
-            <h2 className="text-2xl font-bold">{product?.name}</h2>
-            <div className="border flex-1 my-2 border-slate-800" />
+        
+        {/* Right Section: Product Info */}
+        <div className="flex flex-col">
+          <h1 className="text-3xl font-bold text-gray-900">{product?.name}</h1>
+          <div className="py-2 text-xl font-semibold">
+          {addProductToCart && addProductToCart.price !== undefined && `${addProductToCart.price.toLocaleString("vi-VN")} đ`}
+
           </div>
-          <div>
-            {product?.attribute?.length ? (
-              product.attribute.map((attr, attrIndex) => (
-                <div key={attrIndex} className="flex-1 gap-2">
-                  <p className="text-xl font-semibold my-4">{attr.name}</p>
-                  <div className="flex">
-                    {attr.values.map((value, index) => (
-                      <div
-                        key={index}
-                        className={`border p-4 gap-2 ${
-                          selectedAttributes[attr.name] === index
-                            ? "border-green-400 bg-[#E6F8F1]"
-                            : "border-gray-400"
-                        } rounded-xl mx-1 cursor-pointer`}
-                        onClick={() => handleAttributeClick(attr.name, index)}
-                      >
-                        {value.html_color ? (
+
+          {/* Attribute Selection */}
+          <div className="py-2">
+            {product?.attribute.map((attr,index) => (
+              <div key={attr.name} className="py-1">
+                <h3 className="text-lg font-semibold">{attr.name}:</h3>
+                <div className="flex gap-4">
+                  {attr.values.map((value, index) => (
+                    <button
+                      key={value.value}
+                      className={`border-2 rounded px-2 py-1 transition-colors hover:border-blue-300 ${
+                        selectedAttributes[attr.name] === value.value
+                          ? "border-green-300 text-green-400"
+                          : " text-black"
+                      }`}
+                      onClick={() => handleAttributeClick(attr.name, index)}
+                    >
+                     {value.html_color ? (
                           <div
                             className="w-[24px] h-[24px] rounded-full"
                             style={{ backgroundColor: value.html_color }}
                           />
                         ) : (
-                          <p className="text-lg font-normal">{value.value}</p>
+                          <p className="text-lg font-normal px-[20px] py-[10px]">{value.value}</p>
                         )}
-                      </div>
-                    ))}
-                  </div>
+                    </button>
+                  ))}
                 </div>
-              ))
-            ) : (
-              <p className="text-lg font-normal my-4">
-                Sản phẩm này không có thuộc tính cần chọn.
-              </p>
-            )}
+              </div>
+            ))}
           </div>
-        </div>
-      </div>
 
-      <div className="justify-end flex-1 flex items-center bg-[#F4F5F8] px-4 md:px-10 lg:px-28 py-[24px] my-[100px] border-t border-[#B3B3B3]">
-        <div className="justify-center items-center">
-          <h2 className="text-2xl font-bold">
-            {product?.price?.toLocaleString()}đ
-          </h2>
+          <button
+            className="mt-4 px-4 py-2 my-2 bg-blue-600 text-white rounded hover:bg-blue-300"
+            onClick={handleAddToCart}
+          >
+            Thêm vào giỏ hàng
+          </button>
         </div>
-        <button
-          className="bg-[#00B685] text-white rounded-3xl hover:bg-green-600 text-xl p-2 mx-10"
-          onClick={handleAddToCart}
-        >
-          Thêm vào giỏ hàng
-        </button>
       </div>
     </div>
   );

@@ -19,11 +19,11 @@ function SubPage() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [sortOption, setSortOption] = useState("");
   const [currentPage, setCurrentPage] = useState<number>(1);
+
   useEffect(() => {
     setCategoryID(Number(categoryId));
-    //setCurrentPage(1); // Reset to page 1 when category changes
   }, [categoryId]);
-  // Fetch products and category data
+
   useEffect(() => {
     const fetchProducts = async () => {
       if (categoryID) {
@@ -56,7 +56,7 @@ function SubPage() {
           if (matchedCategory) {
             setCategory(matchedCategory);
           } else {
-            // message.error("Không tìm thấy danh mục.");
+            message.error("Không tìm thấy danh mục.");
           }
         } catch (error) {
           message.error("Có lỗi xảy ra khi tải danh mục.");
@@ -92,16 +92,17 @@ function SubPage() {
   if (error) {
     return <div className="text-red-500 mt-[96px]">{error}</div>;
   }
+
   const sortOptions = [
-    //{ label: 'Bán chạy nhất', value: 'best-seller' },
     { label: "Giá giảm dần", value: "DESC" },
     { label: "Giá tăng dần", value: "ASC" },
   ];
+
   const handleSort = (option: string) => {
     setSortOption(option);
-    // Close the dropdown after selecting a sort option
     setCurrentPage(1); // Reset to the first page when sorting changes
   };
+
   const menu = (
     <Menu onClick={(e) => handleSort(e.key)}>
       {sortOptions.map((option) => (
@@ -109,14 +110,13 @@ function SubPage() {
       ))}
     </Menu>
   );
+
   return (
     <div className="container mx-auto p-4 mt-[96px]">
-      <div className="flex flex-1 justify-center items-center">
-        <div className="flex-1">
+      <div className="flex justify-between items-center mb-4">
+        <div>
           {category && (
-            <h2 className="text-3xl font-bold text-[#00B685]">
-              {category.name}
-            </h2>
+            <h2 className="text-3xl font-bold text-[#00B685]">{category.name}</h2>
           )}
         </div>
         <Dropdown overlay={menu} trigger={["click"]}>
@@ -126,11 +126,12 @@ function SubPage() {
         </Dropdown>
       </div>
 
-      <div className="flex gap-2 mb-4">
+      {/* Category Children Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {category?.children?.map((childrenCate) => (
           <div
             key={childrenCate.id}
-            className={`gap-2 rounded-lg border p-2 cursor-pointer transition-colors duration-300 ${
+            className={`rounded-lg border p-2 cursor-pointer transition-colors duration-300 ${
               categoryID === childrenCate.id
                 ? "border-[#00B685] bg-[#E6F8F1]"
                 : "border-gray-200"
@@ -150,7 +151,8 @@ function SubPage() {
         ))}
       </div>
 
-      <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-10">
+      {/* Product Grid */}
+      <ul className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-10 mt-4">
         {products.length ? (
           products.map((product) => (
             <SubpageCard key={product.id} product={product} />
@@ -160,6 +162,7 @@ function SubPage() {
         )}
       </ul>
 
+      {/* Load More Button */}
       {products.length >= pageSize && (
         <div className="flex justify-center mt-8">
           <button

@@ -15,22 +15,22 @@ const CardPhone: React.FC<CardPhoneProps> = ({ product }) => {
     console.log("Product ID:", product.id);
   };
   return (
-    <div className="w-[304px] h-[432px] p-5 rounded-lg shadow-md flex flex-col items-center">
+    <div className="lg:w-[350px] lg:h-[450px] w-[170px] h-[300px] p-5 rounded-lg shadow-md flex flex-col items-center my-4 mx-1">
       {/* Product ID */}
-      <p className="text-orange-500 font-medium text-base self-start">
+      <p className="text-orange-500 font-medium text-base self-start hidden lg:flex">
       Hot
       </p>
 
       {/* Product Image */}
       <img
         src={product.images[numberColor]}
-        className="w-[244px] h-[244px] object-cover my-4  "
+        className="ld:w-[244px] lg:h-[244px] w-[150px] h=[150px] object-cover my-4  "
         alt="Phone"
         onClick={handleProductClick}
       />
 
       {/* Color Options */}
-      <div className="flex gap-2">
+      <div className="flex lg:gap-2 gap-1 ">
         {Array.isArray(product.attribute) &&
           product.attribute.length > 0 &&
           product?.attribute[0]?.values?.map((value, index) => (
@@ -49,17 +49,18 @@ const CardPhone: React.FC<CardPhoneProps> = ({ product }) => {
 
       {/* Product Name */}
       <div className="text-center mb-1">
-        <p className="font-semibold text-lg">{product.name}</p>
-      </div>
+  <p className="font-semibold lg:text-lg text-sm">
+    {product.name.length > 20 ? product.name.substring(0, 20) + '...' : product.name}
+  </p>
+</div>
+
 
       {/* Price Display */}
-      <div className="flex space-x-2 items-center">
-        <p className="text-blue-500 font-bold text-lg">
+      <div className="flex space-x-2 lg:items-center justify-start">
+        <p className="text-blue-500 font-bold  lg:text-lg text-sm">
           {product.price.toLocaleString()}đ
         </p>
-        {/* <p className="text-blue-500 font-bold text-lg">
-          {product.salePrice.toLocaleString()}đ
-        </p> */}
+    
       </div>
     </div>
   );

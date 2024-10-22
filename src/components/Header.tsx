@@ -69,7 +69,7 @@ function Header() {
               <button
                 key={category.id}
                 onClick={() => handleCategoryClick(category.id)}
-                className="text-black font-normal text-xl leading-6"
+                className="text-black font-normal text-xl leading-6 hover:border-b-2 hover:border-blue-700"
               >
                 {category.name}
               </button>
