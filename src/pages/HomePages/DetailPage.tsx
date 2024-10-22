@@ -153,7 +153,7 @@ console.log(cartItem)
       </div>
 
       <div className="flex-1 lg:flex px-4 md:px-10 lg:px-28 lg:justify-between">
-        <div className="justify-center items-center flex-1 lg:mr-[200px] flex flex-col">
+        <div className="justify-center items-center flex-3  flex flex-col">
           <img
             src={currentImage}
             alt={product?.name}
