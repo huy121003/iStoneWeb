@@ -18,13 +18,14 @@ function Header() {
   const navigate = useNavigate(); // Khởi tạo useNavigate
   const handleCategoryClick = (categoryId: number) => {
     // Điều hướng đến trang SubPage với categoryId trong URL
-    //console.log(categoryId);
+ 
     navigate(`/subpage/${categoryId}`);
+    onClose();
   };
   useEffect(() => {
     const fetchCategories = async () => {
       const newCategories = await FetchCategoryApi();
-      console.log(newCategories);
+   
       if (!newCategories.message) {
         setCategories(newCategories);
       } else message.error(newCategories.message);
@@ -45,9 +46,6 @@ function Header() {
             </p>
           </div>
           <div className="flex gap-5 justify-end">
-            {/* <i className="fa-solid fa-magnifying-glass text-white text-xl" />
-            <i className="fa-solid fa-bag-shopping text-white text-xl" />
-            <i className="fa-regular fa-user text-white text-xl" /> */}
             <p className="text-white hover:text-blue-700 text-sm">Đăng nhập</p>
             <p className="text-white hover:text-blue-700 text-sm">Đăng kí</p>
           </div>
@@ -105,8 +103,13 @@ function Header() {
                   </button>
                 ))}
               </div>
-              <p className="text-black font-normal text-xl leading-6 mb-[60px]"
-              onClick={()=>navigate("/cart")}>
+              <p
+                className="text-black font-normal text-xl leading-6 mb-[60px]"
+                onClick={() => {
+                  navigate("/cart");
+                  onClose();
+                }}
+              >
                 Giỏ hàng
               </p>
               <p className="text-black font-normal text-xl leading-6 my-4">
@@ -119,8 +122,10 @@ function Header() {
           </div>
           <div className="hidden lg:flex gap-5 justify-end">
             <i className="fa-solid fa-magnifying-glass text-black text-xl" />
-            <i className="fa-solid fa-bag-shopping text-black text-xl" 
-            onClick={()=>navigate("/cart")}/>
+            <i
+              className="fa-solid fa-bag-shopping text-black text-xl"
+              onClick={() => navigate("/cart")}
+            />
             <i className="fa-regular fa-user text-black text-xl" />
           </div>
         </div>

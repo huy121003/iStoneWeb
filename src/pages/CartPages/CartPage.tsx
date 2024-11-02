@@ -56,12 +56,8 @@ const CartPage: React.FC = () => {
   );
 
   return (
-
- 
-
     <div className=" flex-col  mt-[96px] flex-1">
       <div className=" flex items-center ml-[20px]">
-
         <i className="fa-solid fa-home" onClick={() => navigate("/")} />
         <p className="text-xl font-bold text-green-500 ml-2">{" >"} Giỏ hàng</p>
       </div>
@@ -77,14 +73,14 @@ const CartPage: React.FC = () => {
                 className="flex items-center w-full bg-white p-4 rounded-lg shadow-lg justify-between"
               >
                 <div className="flex flex-1 gap-4">
-                  <div className="w-[80px] h-[80px] sm:w-[100px] sm:h-[100px] lg:w-[150px] lg:h-[150px]">
+                  <div className="w-[80px] h-[80px] sm:w-[100px] sm:h-[100px] lg:w-[150px] lg:h-[150px] ">
                     <img
                       src={item.imageProduct}
                       alt={item.name}
-                      className="w-full h-full object-cover"
+                      className="h-auto w-auto object-cover"
                     />
                   </div>
-                  <div className="flex flex-col justify-between">
+                  <div className="flex flex-col justify-between flex-1">
                     <h2 className="font-bold text-sm sm:text-lg lg:text-xl">
                       {item.name}
                     </h2>
@@ -112,7 +108,7 @@ const CartPage: React.FC = () => {
                     </div>
                     <button
                       onClick={() => handleRemoveItem(item)}
-                      className="text-red-500 text-sm lg:text-lg flex items-center gap-2"
+                      className="text-red-500 text-sm lg:text-lg flex items-center gap-2 lg:hidden my-2"
                     >
                       <i className="fa-solid fa-trash" />
                       Xóa
@@ -125,6 +121,13 @@ const CartPage: React.FC = () => {
                   </p>
                   <p className="line-through text-xs lg:text-sm">
                     {item.price.toLocaleString()}đ/cái
+                  </p>
+                  <p
+                    onClick={() => handleRemoveItem(item)}
+                    className="text-red-500 text-sm lg:text-xl  items-center  lg:flex hidden my-2 justify-end"
+                  >
+                    <i className="fa-solid fa-trash mr-4" />
+                    Xóa
                   </p>
                 </div>
               </div>
@@ -152,7 +155,9 @@ const CartPage: React.FC = () => {
                 </h2>
               </div>
 
-              <h3 className="text-lg font-semibold mb-2">Phương thức thanh toán</h3>
+              <h3 className="text-lg font-semibold mb-2">
+                Phương thức thanh toán
+              </h3>
               <div className="flex flex-col gap-2">
                 <label>
                   <input type="radio" name="paymentMethod" defaultChecked />

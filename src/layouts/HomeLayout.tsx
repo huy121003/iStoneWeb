@@ -7,9 +7,9 @@ interface HomeLayoutProps {
 
 function HomeLayout({ children }: HomeLayoutProps) {
   return (
-    <div className={`flex-1 max-h-[100vh] overflow-y-auto`}>
+    <div className={`flex-1 max-h-[100vh] overflow-y-auto overflow-x-hidden`}>
       <Header />
-       
+
       <div className="">{children}</div>
     </div>
   );

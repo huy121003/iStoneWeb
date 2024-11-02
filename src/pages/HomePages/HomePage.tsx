@@ -22,7 +22,7 @@ function HomePage() {
   useEffect(() => {
     const fethcBanner = async () => {
       const res = await FetchBannerApi();
-      console.log("deded", res);
+
       if (!res.message) {
         setBanners(res);
       } else message.error(res.message);
@@ -73,6 +73,7 @@ function HomePage() {
   };
   return (
     <HomeLayout>
+      <div className="h-[70px]" />
       <div className="relative  ">
         <Carousel autoplay ref={carouselRef} className="w-full ">
           {banners.map((banner, index) => (
@@ -111,7 +112,7 @@ function HomePage() {
             {ads.map((ad, index) => (
               <div
                 key={index}
-                className="flex flex-row md:flex-col px-10 border-l border-gray-300 first:border-l-0 md:first:border-l md:last:border-r-0"
+                className="flex flex-row md:flex-col px-10 md:border-l border-gray-300 first:border-l-0 md:first:border-l md:last:border-r-0 "
               >
                 <i
                   className={`${ad.icon} text-2xl text-gray-600 mb-2 mr-2 md:mb-4 md:mr-0`}

@@ -116,7 +116,9 @@ function SubPage() {
       <div className="flex justify-between items-center mb-4">
         <div>
           {category && (
-            <h2 className="text-3xl font-bold text-[#00B685]">{category.name}</h2>
+            <h2 className="text-3xl font-bold text-[#00B685]">
+              {category.name}
+            </h2>
           )}
         </div>
         <Dropdown overlay={menu} trigger={["click"]}>
@@ -152,7 +154,7 @@ function SubPage() {
       </div>
 
       {/* Product Grid */}
-      <ul className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-10 mt-4">
+      <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 lg:gap-10 md:gap-6 gap-4 mt-4">
         {products.length ? (
           products.map((product) => (
             <SubpageCard key={product.id} product={product} />

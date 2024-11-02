@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import CardPhone from "../../components/CardPhone";
 import { ICategories } from "../../models/ICategories";
 import { IProduct } from "../../models/IProduct";
@@ -8,7 +8,6 @@ import { useNavigate } from "react-router-dom";
 import { Button, Dropdown, Menu, message } from "antd";
 import queryString from "query-string";
 
-// Sử dụng React.memo để tránh render lại không cần thiết
 const MemoizedCardPhone = React.memo(CardPhone);
 
 interface IProductRowProps {
@@ -20,16 +19,15 @@ const ProductRow: React.FC<IProductRowProps> = ({ category }) => {
   const [products, setProducts] = useState<IProduct[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<IProduct[]>([]);
   const [sortOption, setSortOption] = useState("");
-  const [currentPage, setCurrentPage] = useState<number>(1);
   const [keyword, setKeyword] = useState<string>("");
-  const itemsPerPage = 5;
+  const itemsPerPage = 20;
   const navigate = useNavigate();
+  const productContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchProducts = async () => {
       const query = queryString.stringify(
         {
-          page: currentPage,
           categoryId: categoryId,
           order: sortOption,
           take: itemsPerPage,
@@ -49,16 +47,14 @@ const ProductRow: React.FC<IProductRowProps> = ({ category }) => {
     };
 
     fetchProducts();
-  }, [category.id, categoryId, sortOption, currentPage, keyword]);
+  }, [category.id, categoryId, sortOption, keyword]);
 
   const handleCategoryChange = useCallback((id: number) => {
     setCategoryId(id);
-    setCurrentPage(1); // Reset về trang đầu khi thay đổi danh mục
   }, []);
 
   const handleSort = (option: string) => {
     setSortOption(option);
-    setCurrentPage(1); // Reset về trang đầu khi thay đổi sắp xếp
   };
 
   const sortOptions = [
@@ -75,9 +71,13 @@ const ProductRow: React.FC<IProductRowProps> = ({ category }) => {
   );
 
   const handleScroll = (direction: "left" | "right") => {
-    setCurrentPage((prevPage) =>
-      direction === "right" ? prevPage + 1 : Math.max(prevPage - 1, 1)
-    );
+    if (productContainerRef.current) {
+      const scrollAmount = 300; // Độ dài cuộn
+      productContainerRef.current.scrollBy({
+        left: direction === "right" ? scrollAmount : -scrollAmount,
+        behavior: "smooth",
+      });
+    }
   };
 
   const handleCategoryClick = (categoryId: number) => {
@@ -85,8 +85,7 @@ const ProductRow: React.FC<IProductRowProps> = ({ category }) => {
   };
 
   return (
-    <div className="gap-10 rounded-xl py-2 px-4 md:px-28 flex flex-col w-full">
-      {/* Tiêu đề và mô tả */}
+    <div className="gap-10 rounded-xl py-2 px-4 lg:px-28 flex flex-col w-full overflow-hidden">
       <div className="flex flex-col md:flex-row justify-start mb-4">
         <h2 className="text-black text-3xl font-bold mr-[10px]">
           {category.name}
@@ -96,10 +95,8 @@ const ProductRow: React.FC<IProductRowProps> = ({ category }) => {
         </p>
       </div>
 
-      {/* Danh mục con và tùy chọn sắp xếp */}
-      <div className="flex justify-between items-center mb-4">
-        {/* Danh mục con */}
-        <div className="flex gap-4">
+      <div className="flex justify-between items-center mb-4 flex-1">
+        <div className="flex gap-4 flex-1 mr-4">
           {category.children?.map((child) => (
             <div
               key={child.id}
@@ -122,8 +119,8 @@ const ProductRow: React.FC<IProductRowProps> = ({ category }) => {
             </div>
           ))}
         </div>
+        <div className="lg:flex-1 hidden " />
 
-        {/* Menu sắp xếp */}
         <div className="hidden lg:flex">
           <Dropdown overlay={menu} trigger={["click"]}>
             <Button>
@@ -133,38 +130,37 @@ const ProductRow: React.FC<IProductRowProps> = ({ category }) => {
         </div>
       </div>
 
-      {/* Thẻ sản phẩm và phân trang */}
-      <div className="flex justify-center items-center overflow-hidden relative">
-        {currentPage > 1 && (
-          <button
-            className="absolute left-0 scroll-button border rounded-full w-[56px] h-[56px] p-2 bg-[#3C3C432E] hidden lg:flex items-center justify-center transition hover:bg-[#3C3C43BF]"
-            onClick={() => handleScroll("left")}
-          >
-            <i className="fa-solid fa-chevron-left text-xl font-bold "></i>
-          </button>
-        )}
+      <div className="relative flex justify-center items-center overflow-hidden">
+        <button
+          className="absolute left-0 z-10 scroll-button border rounded-full w-[56px] h-[56px] p-2 bg-[#3C3C432E] hidden lg:flex items-center justify-center transition hover:bg-[#3C3C43BF]"
+          onClick={() => handleScroll("left")}
+        >
+          <i className="fa-solid fa-chevron-left text-xl font-bold"></i>
+        </button>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:flex lg:gap-7">
+        <div
+          ref={productContainerRef}
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:flex lg:gap-2 overflow-hidden max-w-full"
+        >
           {filteredProducts.length > 0 ? (
             filteredProducts.map((product) => (
-              <MemoizedCardPhone key={product.id} product={product} />
+              <div className="lg:w-[350px] justify-center items-center">
+                <MemoizedCardPhone key={product.id} product={product} />
+              </div>
             ))
           ) : (
             <NotProduct />
           )}
         </div>
 
-        {filteredProducts.length === itemsPerPage && (
-          <button
-            className="absolute right-0 scroll-button border rounded-full w-[56px] h-[56px] p-2 bg-[#3C3C432E] hidden lg:flex items-center justify-center transition hover:bg-[#3C3C43BF]"
-            onClick={() => handleScroll("right")}
-          >
-            <i className="fa-solid fa-chevron-right text-xl font-bold"></i>
-          </button>
-        )}
+        <button
+          className="absolute right-0 z-10 scroll-button border rounded-full w-[56px] h-[56px] p-2 bg-[#3C3C432E] hidden lg:flex items-center justify-center transition hover:bg-[#3C3C43BF]"
+          onClick={() => handleScroll("right")}
+        >
+          <i className="fa-solid fa-chevron-right text-xl font-bold"></i>
+        </button>
       </div>
 
-      {/* Liên kết xem toàn bộ */}
       <div className="flex justify-center text-center mt-4">
         <p
           className="text-green-400 cursor-pointer hover:underline"

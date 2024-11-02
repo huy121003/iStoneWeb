@@ -9,10 +9,12 @@ const DetailPage: React.FC = () => {
   const [image, setImage] = useState<string | undefined>();
   const { productId } = useParams();
   const [childProducts, setChildProducts] = useState<any[]>([]);
-  const [selectedAttributes, setSelectedAttributes] = useState<Record<string, any>>({});
+  const [selectedAttributes, setSelectedAttributes] = useState<
+    Record<string, any>
+  >({});
   const [product, setProduct] = useState<IProduct>();
 
-  const [addProductToCart,setAddProductToCart]=useState<any>({})
+  const [addProductToCart, setAddProductToCart] = useState<any>({});
   useEffect(() => {
     const fetchProduct = async () => {
       const response = await FetchProductDetailApi(Number(productId));
@@ -20,60 +22,50 @@ const DetailPage: React.FC = () => {
         message.error(response.message);
       } else {
         setProduct(response);
-        console.log(response)
+
         setCurrentImage(response.images[0]);
-        
+
         setChildProducts(response.child);
-        const initialAttributes = response.attribute.reduce((acc: any, attr: any) => {
-          acc[attr.name] = attr.values[0].value;
-          return acc;
-        }, {});
-       
-        console.log("ggg",image)
-       
+        const initialAttributes = response.attribute.reduce(
+          (acc: any, attr: any) => {
+            acc[attr.name] = attr.values[0].value;
+            return acc;
+          },
+          {}
+        );
+
         setSelectedAttributes(initialAttributes);
-     
-        
       }
     };
     fetchProduct();
   }, [productId]);
-useEffect(() => {
-  const updatePrice = () => {
-    const selectedChildProduct = childProducts.find((child) => {
-      return Object.keys(selectedAttributes).every((key,index) => {
-       
-        return selectedAttributes[key] === child.variations[index].value;
+  useEffect(() => {
+    const updatePrice = () => {
+      const selectedChildProduct = childProducts.find((child) => {
+        return Object.keys(selectedAttributes).every((key, index) => {
+          return selectedAttributes[key] === child.variations[index].value;
+        });
       });
-    });
- 
-    if (selectedChildProduct) {
-      setAddProductToCart(selectedChildProduct);
-      if(selectedChildProduct.images.length > 0){
-        setImage(selectedChildProduct.images[0])
+
+      if (selectedChildProduct) {
+        setAddProductToCart(selectedChildProduct);
+        if (selectedChildProduct.images.length > 0) {
+          setImage(selectedChildProduct.images[0]);
+        } else setImage(product?.images[0]);
+        setCurrentImage(product?.images[0]);
       }
-      else setImage(product?.images[0]);
-      setCurrentImage(product?.images[0]);
-     console.log('ee',image)
-     
-console.log(selectedChildProduct)
-    
-      
-    }
-  }
+    };
 
-  updatePrice();
-}, [selectedAttributes, childProducts, product]);
+    updatePrice();
+  }, [selectedAttributes, childProducts, product]);
 
-const handleAttributeClick = (attrName: string, index: number) => {
-  setSelectedAttributes((prev) => ({
-    ...prev,
-    [attrName]: product?.attribute.find(attr => attr.name === attrName)?.values[index].value,
-  }));
-};
-
- 
- 
+  const handleAttributeClick = (attrName: string, index: number) => {
+    setSelectedAttributes((prev) => ({
+      ...prev,
+      [attrName]: product?.attribute.find((attr) => attr.name === attrName)
+        ?.values[index].value,
+    }));
+  };
 
   const getCartItems = () => JSON.parse(localStorage.getItem("cart") || "[]");
 
@@ -81,7 +73,11 @@ const handleAttributeClick = (attrName: string, index: number) => {
     localStorage.setItem("cart", JSON.stringify(cart));
   };
 
-  const updateCartItemQuantity = (cart: any[], cartItem: any, quantity: number) => {
+  const updateCartItemQuantity = (
+    cart: any[],
+    cartItem: any,
+    quantity: number
+  ) => {
     const existingItemIndex = cart.findIndex(
       (item: any) =>
         item.id === cartItem.id &&
@@ -96,28 +92,26 @@ const handleAttributeClick = (attrName: string, index: number) => {
   };
 
   const handleAddToCart = () => {
+    const cartItem = {
+      ...addProductToCart,
+      imageProduct: currentImage,
+      quantity: 1,
+    };
 
-const cartItem = {
-
-  ...addProductToCart,
-  imageProduct: currentImage,
-  quantity: 1,
-
-  
-};
-console.log(cartItem)
     const cart = getCartItems();
 
     const updatedQuantity = updateCartItemQuantity(cart, cartItem, 1);
 
     if (updatedQuantity) {
-      message.success(`Đã tăng số lượng sản phẩm: ${product?.name} lên ${updatedQuantity}`);
+      message.success(
+        `Đã tăng số lượng sản phẩm: ${product?.name} lên ${updatedQuantity}`
+      );
     } else {
       // Nếu sản phẩm chưa có trong giỏ, thêm sản phẩm mới vào giỏ hàng
       cart.push(cartItem);
       message.success(`Đã thêm vào giỏ hàng: ${product?.name}`);
     }
-  
+
     saveCartItems(cart);
   };
 
@@ -126,9 +120,9 @@ console.log(cartItem)
   return (
     <div className="flex-1 flex-row bg-[#FFFFFF] mt-[96px]">
       {/* Left Section: Product Image */}
-      <div className="flex flex-1 justify-start items-center lg:gap-2 px-4 md:px-10 lg:px-28 py-8">
-        <button>
-          <i className="fa-solid fa-home text-black lg:text-2xl mr-2" />
+      <div className="flex flex-3 justify-start items-center lg:gap-2 px-4 md:px-10 lg:px-28 py-8">
+        <button onClick={() => navigate("/")}>
+          <i className="fa-solid fa-home text-black lg:text-2xl mr-2 horertext-gray-400" />
         </button>
         <p className="text-black lg:text-2xl">&gt;</p>
         {product && (
@@ -146,14 +140,21 @@ console.log(cartItem)
             >
               {product.category2?.name && `${product.category2.name} `}
             </button>
-            <p className="text-black lg:text-2xl">{product.category2?.name && '>'}</p>
-            <p className="text-green-400 lg:text-2xl ">    {product.name.length > 20 ? product.name.substring(0, 20) + '...' : product.name}</p>
+            <p className="text-black lg:text-2xl">
+              {product.category2?.name && ">"}
+            </p>
+            <p className="text-green-400 lg:text-2xl ">
+              {" "}
+              {product.name.length > 20
+                ? product.name.substring(0, 20) + "..."
+                : product.name}
+            </p>
           </>
         )}
       </div>
 
-      <div className="flex-1 lg:flex px-4 md:px-10 lg:px-28 lg:justify-between">
-        <div className="justify-center items-center flex-3  flex flex-col">
+      <div className="lg:flex px-4 md:px-10 lg:px-28 lg:justify-between">
+        <div className="justify-center items-center flex-1  flex flex-col">
           <img
             src={currentImage}
             alt={product?.name}
@@ -171,18 +172,19 @@ console.log(cartItem)
             ))}
           </div>
         </div>
-        
+
         {/* Right Section: Product Info */}
-        <div className="flex flex-col">
+        <div className="flex flex-1 lg:w-1/3 flex-col">
           <h1 className="text-3xl font-bold text-gray-900">{product?.name}</h1>
           <div className="py-2 text-xl font-semibold">
-          {addProductToCart && addProductToCart.price !== undefined && `${addProductToCart.price.toLocaleString("vi-VN")} đ`}
-
+            {addProductToCart &&
+              addProductToCart.price !== undefined &&
+              `${addProductToCart.price.toLocaleString("vi-VN")} đ`}
           </div>
 
           {/* Attribute Selection */}
           <div className="py-2">
-            {product?.attribute.map((attr,index) => (
+            {product?.attribute.map((attr, index) => (
               <div key={attr.name} className="py-1">
                 <h3 className="text-lg font-semibold">{attr.name}:</h3>
                 <div className="flex gap-4">
@@ -196,14 +198,16 @@ console.log(cartItem)
                       }`}
                       onClick={() => handleAttributeClick(attr.name, index)}
                     >
-                     {value.html_color ? (
-                          <div
-                            className="w-[24px] h-[24px] rounded-full"
-                            style={{ backgroundColor: value.html_color }}
-                          />
-                        ) : (
-                          <p className="text-lg font-normal px-[20px] py-[10px]">{value.value}</p>
-                        )}
+                      {value.html_color ? (
+                        <div
+                          className="w-[24px] h-[24px] rounded-full"
+                          style={{ backgroundColor: value.html_color }}
+                        />
+                      ) : (
+                        <p className="text-lg font-normal px-[20px] py-[10px]">
+                          {value.value}
+                        </p>
+                      )}
                     </button>
                   ))}
                 </div>

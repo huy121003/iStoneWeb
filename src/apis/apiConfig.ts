@@ -16,15 +16,15 @@ const apiConfig = axios.create({
 const handleError = (error: any) => {
   if (error.response) {
     // Phản hồi từ server với mã lỗi
-    console.error("Error Response:", error.response);
+
     throw new Error(`Error: ${error.response.status} - ${error.response.data}`);
   } else if (error.request) {
     // Yêu cầu đã được gửi nhưng không nhận được phản hồi
-    console.error("Error Request:", error.request);
+
     throw new Error("No response received from server.");
   } else {
     // Lỗi trong quá trình thiết lập yêu cầu
-    console.error("Error Message:", error.message);
+   
     throw new Error(`Request error: ${error.message}`);
   }
 };
